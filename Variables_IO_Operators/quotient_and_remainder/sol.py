@@ -1,5 +1,5 @@
 class Solution:
-   def quotient_remainder_brute(dividend, divisor):
+   def quotient_remainder_brute(self,dividend, divisor):
     if dividend == 0:
         return [0, 0]
 
