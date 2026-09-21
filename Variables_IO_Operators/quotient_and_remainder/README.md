@@ -46,7 +46,7 @@ Implemented as a `Solution` class with one method per approach:
 ```python
 class Solution:
     def quotient_remainder_brute(self, dividend, divisor):
-        # Brute Force - Repeated Subtraction
+        # Brute Force - Repeated Subtraction (see README)
         if dividend == 0:
             return [0, 0]
 
@@ -55,19 +55,22 @@ class Solution:
 
         count = 0
         while a >= b:
-            a -= b
-            count += 1
+            a -= b        # subtract one whole copy of the divisor's magnitude
+            count += 1    # ... and count it
 
+        # `count` and the leftover `a` are truncating-division results (magnitudes only).
+        # Adjust for Python's floor-division convention when signs differ and there's a remainder:
         if sign_differs and a != 0:
             quotient = -(count + 1)
         else:
-            quotient = -(count if sign_differs else count)
+            quotient = -count if sign_differs else count
 
+        # Recompute remainder from the identity, so it's guaranteed consistent with quotient:
         remainder = dividend - divisor * quotient
         return [quotient, remainder]
 
     def quotient_remainder_optimized(self, dividend, divisor):
-        # Optimized - Built-in Integer Division and Modulo
+        # Optimized - Built-in Integer Division and Modulo (see README)
         quotient = dividend // divisor
         remainder = dividend % divisor
         return [quotient, remainder]
@@ -75,19 +78,15 @@ class Solution:
 
 > **Calling convention:** both are instance methods (they take `self`) — call them on an instance (`Solution().quotient_remainder_brute(dividend, divisor)`), not on the class directly.
 
-> **⚠️ Known bug in `quotient_remainder_brute`:** the line `quotient = -(count if sign_differs else count)` always evaluates to `-count`, because both branches of that ternary are the same expression (`count`) — the `if sign_differs else` adds no actual branching. This means whenever `dividend` and `divisor` have the **same sign** (both positive or both negative), the quotient comes out negated and the remainder — recomputed from the identity using that wrong quotient — comes out wrong too. For example, `quotient_remainder_brute(17, 5)` currently returns `[-3, 32]` instead of `[3, 2]`. The mixed-sign path (`sign_differs and a != 0` branch) is unaffected and correct. `quotient_remainder_optimized` doesn't have this bug and is correct for all sign combinations — confirmed by the tests below. **This hasn't been fixed here** — see the Tests section for what's failing and where to look.
-
 ### Brute Force — `quotient_remainder_brute`
 
-Simulate long division by hand: repeatedly subtract the divisor's magnitude from the dividend's magnitude, counting how many subtractions happen, then fix up the signs at the end to (intend to) match Python's floor-division convention.
+Simulate long division by hand: repeatedly subtract the divisor's magnitude from the dividend's magnitude, counting how many subtractions happen, then fix up the sign at the end to match Python's floor-division convention.
 
-**Algorithm (as intended)**
+**Algorithm**
 1. Handle `dividend == 0` directly (`[0, 0]`).
 2. Work with magnitudes (`abs(dividend)`, `abs(divisor)`) and repeatedly subtract, counting each subtraction, until what's left is smaller than the divisor's magnitude.
 3. Adjust the quotient's sign (and bump it by one more toward negative infinity when there's a nonzero remainder and the signs differ) to match floor-division semantics.
 4. Recompute `remainder` from the identity `dividend - divisor * quotient`, so it's always consistent with the chosen quotient.
-
-Step 3 is where the bug lives — see the callout above.
 
 ### Optimized — `quotient_remainder_optimized`
 
@@ -100,7 +99,7 @@ Every language provides operators that compute exactly this, so there's no reaso
 
 ## Dry Run
 
-### Brute Force — `dividend = 17, divisor = 5` (traces the actual buggy behavior)
+### Brute Force — `dividend = 17, divisor = 5`
 
 | Step | a (start) | a >= b? | a -= b | count |
 |---|---|---|---|---|
@@ -109,7 +108,7 @@ Every language provides operators that compute exactly this, so there's no reaso
 | 3 | 7 | yes | 2 | 3 |
 | 4 | 2 | no → loop exits | — | 3 |
 
-`sign_differs` is `False` (both positive), so control goes to the `else` branch: `quotient = -(count if sign_differs else count)`. Both sides of that ternary are `count`, so this is just `-(count)` = `-3`, regardless of `sign_differs`. That's the bug — it *should* be `+3` here. `remainder` is then recomputed from the (already wrong) quotient: `17 - 5*(-3) = 17 + 15 = 32`. Return `[-3, 32]`. ❌ does **not** match the expected `[3, 2]` — this is the bug described above, reproduced step by step.
+`sign_differs` is `False` (both positive), so control goes to the `else` branch: `quotient = -count if sign_differs else count`, which correctly picks the second branch, `count` = `3` (no negation). `remainder` is then recomputed from the identity: `17 - 5*3 = 17 - 15 = 2`. Return `[3, 2]`. ✅ matches expected output.
 
 ### Optimized — `dividend = 17, divisor = 5`
 
@@ -120,9 +119,9 @@ Every language provides operators that compute exactly this, so there's no reaso
 
 Return `[3, 2]`. ✅ matches expected output.
 
-**Second dry run (both approaches) — `dividend = 3, divisor = 8`:** since `3 < 8`, the brute-force loop never executes (`a >= b` is false immediately), so `count = 0`. The buggy `else` branch computes `quotient = -(count) = -0`, which is just `0` — the bug happens to be invisible here only because negating zero doesn't change it. `remainder = 3 - 8*0 = 3`. The optimized version gives `3 // 8 = 0` and `3 % 8 = 3` directly. Both return `[0, 3]`. ✅ matches expected output — but this is a case where the same-sign bug coincidentally doesn't manifest, not evidence that the brute-force method is correct.
+**Second dry run (both approaches) — `dividend = 3, divisor = 8`:** since `3 < 8`, the brute-force loop never executes (`a >= b` is false immediately), so `count = 0` and `sign_differs` is `False`, giving `quotient = 0`. `remainder = 3 - 8*0 = 3`. The optimized version gives `3 // 8 = 0` and `3 % 8 = 3` directly. Both return `[0, 3]`. ✅ matches expected output.
 
-**Negative-input illustration (within the stated constraints, not one of the problem's given examples) — `dividend = -17, divisor = 5`:** magnitudes are `17` and `5`, so the subtraction loop again produces `count = 3` with leftover `2`. Since `sign_differs` is `True` and the leftover (`2`) is nonzero, execution takes the **`if` branch** (`quotient = -(count + 1) = -4`), which is the branch that isn't affected by the bug. `remainder = -17 - 5*(-4) = -17 + 20 = 3`. Return `[-4, 3]`. Python's native operators agree: `-17 // 5 == -4` and `-17 % 5 == 3`. (This is also the case where Java-style languages would instead return `[-3, -2]` — same identity, different valid pair — the cross-language subtlety called out above.) Mixed-sign inputs land on this correct branch; same-sign inputs land on the buggy one.
+**Negative-input illustration (within the stated constraints, not one of the problem's given examples) — `dividend = -17, divisor = 5`:** magnitudes are `17` and `5`, so the subtraction loop again produces `count = 3` with leftover `2`. Since `sign_differs` is `True` and the leftover (`2`) is nonzero, execution takes the `if` branch: `quotient = -(count + 1) = -4`. `remainder = -17 - 5*(-4) = -17 + 20 = 3`. Return `[-4, 3]`. Python's native operators agree: `-17 // 5 == -4` and `-17 % 5 == 3`. (This is also the case where Java-style languages would instead return `[-3, -2]` — same identity, different valid pair — the cross-language subtlety called out above.)
 
 ## Complexity
 
@@ -146,20 +145,21 @@ Integer division and modulo are two of the most-used primitives in software, wel
 
 `test_sol.py` instantiates `Solution()` once (in `setUp`) and runs both methods against the same inputs using `subTest`, so a single test method reports which specific method fails:
 
-| Test | Input (dividend, divisor) | Expected | Result |
-|---|---|---|---|
-| `test_example_1` | (17, 5) | [3, 2] | ❌ `quotient_remainder_brute` fails (returns `[-3, 32]`); optimized passes |
-| `test_example_2` | (3, 8) | [0, 3] | ✅ both pass (bug doesn't manifest at count=0) |
-| `test_zero_dividend` | (0, 5) | [0, 0] | ✅ both pass (short-circuit path) |
-| `test_exact_division` | (10, 5) | [2, 0] | ❌ brute fails (returns `[-2, 20]`); optimized passes |
-| `test_dividend_equals_divisor` | (5, 5) | [1, 0] | ❌ brute fails (returns `[-1, 10]`); optimized passes |
-| `test_negative_dividend_positive_divisor` | (-17, 5) | [-4, 3] | ✅ both pass (mixed-sign branch is correct) |
-| `test_positive_dividend_negative_divisor` | (17, -5) | [-4, -3] | ✅ both pass (mixed-sign branch is correct) |
-| `test_both_negative` | (-17, -5) | [3, -2] | ❌ brute fails (returns `[-3, -32]`); optimized passes |
-| `test_divisor_of_one` | (12345, 1) | [12345, 0] | ❌ brute fails (returns `[-12345, 24690]`); optimized passes |
-| `test_max_32bit_signed_dividend_optimized_only` | (2147483647, 2) | [1073741823, 1] | ✅ optimized only — `quotient_remainder_brute` isn't run here since it's O(dividend/divisor) and this input forces ~2^30 loop iterations (~80s observed), impractical for a routine test run |
+| Test | Input (dividend, divisor) | Expected |
+|---|---|---|
+| `test_example_1` | (17, 5) | [3, 2] |
+| `test_example_2` | (3, 8) | [0, 3] |
+| `test_zero_dividend` | (0, 5) | [0, 0] |
+| `test_exact_division` | (10, 5) | [2, 0] |
+| `test_dividend_equals_divisor` | (5, 5) | [1, 0] |
+| `test_negative_dividend_positive_divisor` | (-17, 5) | [-4, 3] |
+| `test_positive_dividend_negative_divisor` | (17, -5) | [-4, -3] |
+| `test_both_negative` | (-17, -5) | [3, -2] |
+| `test_divisor_of_one` | (12345, 1) | [12345, 0] |
+| `test_max_32bit_signed_dividend_optimized_only` | (2147483647, 2) | [1073741823, 1] — optimized only, since `quotient_remainder_brute` is O(dividend/divisor) and this input forces ~2^30 loop iterations (~80s observed), impractical for a routine test run |
 
-**Net result: 5 of 10 tests fail, every one of them on `quotient_remainder_brute` for same-sign inputs** — this is the real bug described in the Solution section above, not a test-writing issue. `quotient_remainder_optimized` passes every case. 
+All 10 tests (19 sub-assertions across the 2 methods) pass against the current `sol.py`.
+
 Run with:
 ```bash
 cd Variables_IO_Operators/quotient_and_remainder
