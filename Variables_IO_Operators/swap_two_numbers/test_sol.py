@@ -5,10 +5,10 @@ from sol import Solution
 
 class TestSwapTwoNumbers(unittest.TestCase):
     """
-    Note: the methods on Solution don't take `self` (no @staticmethod either),
-    so they must be called on the class itself - Solution.method(a, b) -
-    not on an instance. Calling them on an instance (Solution().method(a, b))
-    raises a TypeError because the instance gets passed as the first argument.
+    Note: the methods on Solution take `self`, so they're instance methods -
+    call them on an instance (Solution().method(a, b)), not on the class
+    directly. Solution.method(a, b) would bind `a` to `self` and leave `b`
+    unfilled, raising a TypeError.
     """
 
     METHODS = [
@@ -18,9 +18,12 @@ class TestSwapTwoNumbers(unittest.TestCase):
         "swap_two_num_with_or",
     ]
 
+    def setUp(self):
+        self.sol = Solution()
+
     def _check_all_methods(self, a, b, expected):
         for name in self.METHODS:
-            method = getattr(Solution, name)
+            method = getattr(self.sol, name)
             with self.subTest(method=name):
                 self.assertEqual(method(a, b), expected)
 

@@ -35,30 +35,30 @@ Implemented as a `Solution` class with four swap variants, each demonstrating a 
 
 ```python
 class Solution:
-    def swap_two_num_with_built_in_method(a, b):
+    def swap_two_num_with_built_in_method(self, a, b):
         a, b = b, a
         return [a, b]
 
-    def swap_two_num_with_temp(a, b):
+    def swap_two_num_with_temp(self, a, b):
         temp = a
         a = b
         b = temp
         return [a, b]
 
-    def swap_two_num_with_arithmetic(a, b):
+    def swap_two_num_with_arithmetic(self, a, b):
         a = a + b     # a now holds the sum of both original values
         b = a - b     # subtract original b from the sum -> b becomes original a
         a = a - b     # subtract new b (original a) from the sum -> a becomes original b
         return [a, b]
 
-    def swap_two_num_with_or(a, b):
+    def swap_two_num_with_or(self, a, b):
         a = a ^ b
         b = a ^ b
         a = a ^ b
         return [a, b]
 ```
 
-> **Note on calling convention:** none of these methods take `self` (and none are decorated `@staticmethod`), so they must be called on the class itself — `Solution.swap_two_num_with_temp(a, b)` — not on an instance. `Solution().swap_two_num_with_temp(a, b)` raises a `TypeError`, since the instance would be passed in as the first positional argument (`a`) ahead of the real arguments. The tests below call every method this way.
+> **Note on `self` / calling convention:** these are regular instance methods — `self` is the parameter Python automatically binds to whichever object the method is called through. Calling `Solution().swap_two_num_with_temp(5, 7)` is equivalent to `Solution.swap_two_num_with_temp(instance, 5, 7)` under the hood, so `self` is what catches that auto-inserted instance. That means these methods must be called **on an instance** — `Solution().swap_two_num_with_temp(a, b)` — not on the class directly. `Solution.swap_two_num_with_temp(5, 7)` would bind `5` to `self` and `7` to `a`, leaving `b` unfilled and raising `TypeError: missing 1 required positional argument: 'b'`. None of these methods actually use `self` (no `self.something`), so the strictly "correct" version would mark them `@staticmethod` instead — but `self` works fine and matches the common `class Solution` convention used on most coding-practice platforms. The tests below instantiate `Solution()` once and call every method on that instance.
 
 **Brute Force (most straightforward): `swap_two_num_with_built_in_method`** — uses Python's native tuple-unpacking assignment (`a, b = b, a`), which is the idiomatic Python way to swap and needs no extra reasoning about intermediate state.
 
@@ -139,7 +139,7 @@ Swapping is one of the most-used micro-operations in software, even though it ra
 
 ## Tests
 
-`test_sol.py` runs each of the 4 methods against the same set of inputs using `subTest`, so a single test method reports which specific variant fails if one does:
+`test_sol.py` instantiates `Solution()` once (in `setUp`) and runs each of the 4 methods against the same set of inputs using `subTest`, so a single test method reports which specific variant fails if one does:
 
 | Test | Input (a, b) | Expected |
 |---|---|---|
