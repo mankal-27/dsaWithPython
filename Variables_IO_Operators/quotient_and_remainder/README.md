@@ -159,8 +159,7 @@ Integer division and modulo are two of the most-used primitives in software, wel
 | `test_divisor_of_one` | (12345, 1) | [12345, 0] | ❌ brute fails (returns `[-12345, 24690]`); optimized passes |
 | `test_max_32bit_signed_dividend_optimized_only` | (2147483647, 2) | [1073741823, 1] | ✅ optimized only — `quotient_remainder_brute` isn't run here since it's O(dividend/divisor) and this input forces ~2^30 loop iterations (~80s observed), impractical for a routine test run |
 
-**Net result: 5 of 10 tests fail, every one of them on `quotient_remainder_brute` for same-sign inputs** — this is the real bug described in the Solution section above, not a test-writing issue. `quotient_remainder_optimized` passes every case. Nothing has been changed in `sol.py` to fix this; that's a decision for you to make.
-
+**Net result: 5 of 10 tests fail, every one of them on `quotient_remainder_brute` for same-sign inputs** — this is the real bug described in the Solution section above, not a test-writing issue. `quotient_remainder_optimized` passes every case. 
 Run with:
 ```bash
 cd Variables_IO_Operators/quotient_and_remainder
