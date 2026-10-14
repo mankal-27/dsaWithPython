@@ -1,0 +1,42 @@
+Array: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47]
+Target: 35
+n = 16, so log2(16) = 4 comparisons expected
+
+Step 1: low=0, high=15, mid=7, arr[7]=23
+         23 < 35, so search right half. Remaining: 8 elements.
+
+Step 2: low=8, high=15, mid=11, arr[11]=35
+         35 == 35, FOUND at index 11.
+
+Result: Found in 2 steps (best case can be fewer than log2(n))
+
+
+
+Target: 47
+
+Step 1: low=0, high=15, mid=7, arr[7]=23
+         23 < 47, search right. Remaining: 8 elements.
+
+Step 2: low=8, high=15, mid=11, arr[11]=35
+         35 < 47, search right. Remaining: 4 elements.
+
+Step 3: low=12, high=15, mid=13, arr[13]=41
+         41 < 47, search right. Remaining: 2 elements.
+
+Step 4: low=14, high=15, mid=14, arr[14]=44
+         44 < 47, search right. Remaining: 1 element.
+
+Step 5: low=15, high=15, mid=15, arr[15]=47
+         47 == 47, FOUND at index 15.
+
+Result: Found in 5 steps.
+
+This is an important detail. 
+The maximum number of comparisons in binary search on n elements is floor(log2(n)) + 1, not log2(n). 
+The "+1" accounts for the final comparison when only one element remains.
+
+
+ all implementations use bit shifting (n >>= 1) instead of division for the log2 computation. 
+ This is both faster and more idiomatic when working with powers of 2. 
+ The loop counts how many times we can right-shift n before it becomes 1, 
+ which is exactly the definition of floor(log2(n)).
